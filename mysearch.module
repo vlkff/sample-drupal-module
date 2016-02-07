@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * This is the file description for MySearch module.
+ *
+ * @author Vlad Bogatyhrov
+ */
+
+define('MYSEARCH_ITEMS_PER_PAGE', 10);
+
+/**
+ * Implements hook_permission().
+ */
+function mysearch_permission() {
+  return array(
+    'access mysearch results' => array(
+      'title' => 'Access My Search',
+      'description' => 'Allows a user to access search results.',
+    )
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function mysearch_menu() {
+  $items['mysearch/%'] = array(
+    'title callback' => 'mysearch_results_page_title',
+    'title arguments' => array(1),
+    'page callback' => 'mysearch_results_page',
+    'page arguments' => array(1),
+    'access arguments' => array('access mysearch results'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Title callback for mysearch/% page.
+ */
+function mysearch_results_page_title ($query) {
+  return t('Search for \'@query\'', array('@query' => $query));
+}
+
+/**
+ * Page callback for mysearch/% page.
+ */
+function mysearch_results_page($query) {
+
+  $query = check_plain($query);
+
+  $page = array();
+  $page['results'] = array(
+    '#theme' => 'item_list',
+    '#items' => array(),
+    '#title' => t('Found results:'.$query),
+  );
+  $page['pager'] = array('#theme' => 'pager');
+
+  $nodes = mysearch_dosearch($query);
+  if (empty($nodes)) {
+    $page['results']['#title'] = t('No results found');
+  } else {
+    foreach ($nodes as $node) {
+      $page['results']['#items'][] = l($node->title, 'node/'.$node->nid);
+    }
+  }
+
+  return $page;
+}
+
+/**
+ * Do the search and load found nodes.
+ */
+function mysearch_dosearch($string) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->propertyCondition('status', NODE_PUBLISHED)
+    ->fieldCondition('body', 'value', "%$string%", 'LIKE')
+    ->pager(MYSEARCH_ITEMS_PER_PAGE);
+
+  $result = $query->execute();
+
+  $nodes = array();
+  if (isset($result['node'])) {
+    $nodes = entity_load('node', array_keys($result['node']));
+  }
+
+  return $nodes;
+}

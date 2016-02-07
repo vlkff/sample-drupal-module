@@ -1,0 +1,7 @@
+name = MySearch
+description = "Test module for FFW."
+core = 7.x
+package = Development
+
+files[] = mysearch.module
+files[] = mysearch.test

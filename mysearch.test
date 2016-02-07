@@ -1,0 +1,49 @@
+<?php
+
+class SimpleTestMysearchTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'MySearch module tests',
+      'description' => 'Test does the search work in a right way.',
+      'group' => 'Development',
+    );
+  }
+
+  public function testSimpleTestMySearchModule() {
+    $node_type = field_info_field('body')['bundles']['node'][0];
+
+    $body = array();
+    $published_string = $this->randomString();
+    $body[LANGUAGE_NONE][0] = array(
+      'value' => $published_string,
+      'summary' => text_summary($published_string),
+      'format' => filter_default_format(),
+    );
+    $this->drupalCreateNode(array(
+      'type' => $node_type,
+      'body' => $body,
+      'status' => 1
+    ));
+
+    $body = array();
+    $unpublished_string = $this->randomString();
+    $body[LANGUAGE_NONE][0] = array(
+      'value' => $unpublished_string,
+      'summary' => text_summary($unpublished_string),
+      'format' => filter_default_format(),
+    );
+    $this->drupalCreateNode(array(
+      'type' => $node_type,
+      'body' => $body,
+      'status' => 0
+    ));
+
+    $this->drupalCreateNode();
+    $this->drupalCreateNode();
+    $this->drupalCreateNode();
+
+    $this->assertEqual(1, count(mysearch_dosearch($published_string)), t('Only one single node found'));
+    $this->assertEqual(0, count(mysearch_dosearch($unpublished_string)), t('Unpublished node not found'));
+  }
+}
