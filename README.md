@@ -1,3 +1,5 @@
+# What been updated and why
+
 ### Updated a hook menu 
 We don't need users to have an access to 'mysearch', have a menu item and do need an argument and title callback.
 
